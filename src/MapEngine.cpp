@@ -642,9 +642,6 @@ void MapEngine::Draw3DSurface(const RFParameters& params) {
     float offsetX = (centerTileRaw.x - centerTx) * 256.0f;
     float offsetY = (centerTileRaw.y - centerTy) * 256.0f;
 
-    // Recalculate offsetY to match Draw2D logic (this was correct before, but let's be careful)
-    offsetY = (centerTileRaw.y - centerTy) * 256.0f;
-
     // Calculate world scale for km-to-unit conversion
     double n_tiles = std::pow(2.0, m_zoom);
     double circumferenceKm = 40075.0;
@@ -670,7 +667,6 @@ void MapEngine::Draw3DSurface(const RFParameters& params) {
                 rlSetTexture(it->second->texture.id);
                 rlBegin(RL_QUADS);
                     rlColor4ub(255, 255, 255, 255);
-                    // Fixed winding order for top-down visibility (CCW)
                     rlTexCoord2f(0.0f, 0.0f); rlVertex3f(wX, 0.0f, wZ);
                     rlTexCoord2f(0.0f, 1.0f); rlVertex3f(wX, 0.0f, wZ + wSize);
                     rlTexCoord2f(1.0f, 1.0f); rlVertex3f(wX + wSize, 0.0f, wZ + wSize);
@@ -682,88 +678,79 @@ void MapEngine::Draw3DSurface(const RFParameters& params) {
     }
 
     if (params.txLatitude != 0.0 || params.txLongitude != 0.0) {
-        const int gridSize = 80; // Increased resolution
-        const float spacing = 0.35f; 
+        // High-resolution grid for smooth heatmap
+        const int gridSize = 100;
+        const float spacing = 0.25f; 
         const float startPos = -(gridSize * spacing) / 2.0f;
 
         Vector2 centerTile = LatLonToTile(m_viewLat, m_viewLon, m_zoom);
 
         rlDisableBackfaceCulling();
         rlSetBlendMode(BLEND_ALPHA);
+
         for (int z = 0; z < gridSize - 1; ++z) {
             rlBegin(RL_TRIANGLES);
             for (int x = 0; x < gridSize - 1; ++x) {
-                float pts[4][3];
-                Color cls[4];
+                struct Vert { float x, y, z; Color c; };
+                Vert v[4];
 
-                int coords[4][2] = {{x, z}, {x + 1, z}, {x + 1, z + 1}, {x, z + 1}};
+                int dx[4] = {0, 1, 1, 0};
+                int dz[4] = {0, 0, 1, 1};
 
+                bool valid = false;
                 for (int i = 0; i < 4; ++i) {
-                    float worldX = startPos + coords[i][0] * spacing;
-                    float worldZ = startPos + coords[i][1] * spacing;
-                    Vector2 pixelPos = { worldX * 50.0f, worldZ * 50.0f };
-                    GeoCoord geo = PixelToLatLon(pixelPos, centerTile, m_zoom);
-                    float power = PropagationEngine::CalculateReceivedPower(params, geo.lat, geo.lon);
+                    float wx = startPos + (x + dx[i]) * spacing;
+                    float wz = startPos + (z + dz[i]) * spacing;
                     
-                    float h = 0.1f; // Slightly higher base to avoid Z-fighting
-                    cls[i] = Color{ 0, 0, 0, 0 }; 
-                    if (power != -999.0f) {
+                    Vector2 pixelPos = { wx * 50.0f, wz * 50.0f };
+                    GeoCoord geo = PixelToLatLon(pixelPos, centerTile, m_zoom);
+                    
+                    float power = PropagationEngine::CalculateReceivedPower(params, geo.lat, geo.lon);
+                    float h = 0.05f;
+                    v[i].c = Color{ 0, 0, 0, 0 };
+
+                    if (power > -150.0f) {
                         float margin = power - params.rxSensitivityDbm;
-                        float norm = margin / (-30.0f - params.rxSensitivityDbm);
+                        // Linear normalization for smooth height gradient
+                        float norm = (power + 120.0f) / 90.0f; 
                         if (norm < 0.0f) norm = 0.0f;
                         if (norm > 1.0f) norm = 1.0f;
-                        h += norm * 8.0f * params.surfaceExaggeration;
                         
-                        // Brighter, more opaque colors for 3D surface
-                        if (margin < 10.0f)      cls[i] = Color{ 0, 121, 241, 180 };  
-                        else if (margin < 20.0f) cls[i] = Color{ 0, 255, 255, 190 };  
-                        else if (margin < 30.0f) cls[i] = Color{ 0, 228, 48, 200 };   
-                        else if (margin < 45.0f) cls[i] = Color{ 255, 203, 0, 220 };  
-                        else                     cls[i] = Color{ 230, 41, 55, 240 };  
+                        h = norm * 12.0f * params.surfaceExaggeration;
+                        
+                        if (margin < 10.0f)      v[i].c = Color{ 0, 121, 241, 180 };  
+                        else if (margin < 20.0f) v[i].c = Color{ 0, 255, 255, 190 };  
+                        else if (margin < 30.0f) v[i].c = Color{ 0, 228, 48, 200 };   
+                        else if (margin < 45.0f) v[i].c = Color{ 255, 203, 0, 220 };  
+                        else                     v[i].c = Color{ 230, 41, 55, 240 };
+                        valid = true;
                     }
-                    pts[i][0] = worldX; pts[i][1] = h; pts[i][2] = worldZ;
+                    v[i].x = wx; v[i].y = h; v[i].z = wz;
                 }
 
-                if (cls[0].a > 0 || cls[1].a > 0 || cls[2].a > 0 || cls[3].a > 0) {
-                    // Triangle 1 (CCW)
-                    rlColor4ub(cls[0].r, cls[0].g, cls[0].b, cls[0].a); rlVertex3f(pts[0][0], pts[0][1], pts[0][2]);
-                    rlColor4ub(cls[1].r, cls[1].g, cls[1].b, cls[1].a); rlVertex3f(pts[1][0], pts[1][1], pts[1][2]);
-                    rlColor4ub(cls[2].r, cls[2].g, cls[2].b, cls[2].a); rlVertex3f(pts[2][0], pts[2][1], pts[2][2]);
+                if (valid) {
+                    rlColor4ub(v[0].c.r, v[0].c.g, v[0].c.b, v[0].c.a); rlVertex3f(v[0].x, v[0].y, v[0].z);
+                    rlColor4ub(v[1].c.r, v[1].c.g, v[1].c.b, v[1].c.a); rlVertex3f(v[1].x, v[1].y, v[1].z);
+                    rlColor4ub(v[2].c.r, v[2].c.g, v[2].c.b, v[2].c.a); rlVertex3f(v[2].x, v[2].y, v[2].z);
 
-                    // Triangle 2 (CCW)
-                    rlColor4ub(cls[0].r, cls[0].g, cls[0].b, cls[0].a); rlVertex3f(pts[0][0], pts[0][1], pts[0][2]);
-                    rlColor4ub(cls[2].r, cls[2].g, cls[2].b, cls[2].a); rlVertex3f(pts[2][0], pts[2][1], pts[2][2]);
-                    rlColor4ub(cls[3].r, cls[3].g, cls[3].b, cls[3].a); rlVertex3f(pts[3][0], pts[3][1], pts[3][2]);
+                    rlColor4ub(v[0].c.r, v[0].c.g, v[0].c.b, v[0].c.a); rlVertex3f(v[0].x, v[0].y, v[0].z);
+                    rlColor4ub(v[2].c.r, v[2].c.g, v[2].c.b, v[2].c.a); rlVertex3f(v[2].x, v[2].y, v[2].z);
+                    rlColor4ub(v[3].c.r, v[3].c.g, v[3].c.b, v[3].c.a); rlVertex3f(v[3].x, v[3].y, v[3].z);
                 }
             }
             rlEnd();
         }
-        rlSetBlendMode(BLEND_ALPHA); // Reset to default just in case
 
-        // Draw wireframe overlay for depth perception
+        // Draw refined wireframe
         rlBegin(RL_LINES);
-        for (int z = 0; z < gridSize - 1; z += 2) {
-            for (int x = 0; x < gridSize - 1; x += 2) {
-                float worldX = startPos + x * spacing;
-                float worldZ = startPos + z * spacing;
-                Vector2 pixelPos = { worldX * 50.0f, worldZ * 50.0f };
-                GeoCoord geo = PixelToLatLon(pixelPos, centerTile, m_zoom);
-                float power = PropagationEngine::CalculateReceivedPower(params, geo.lat, geo.lon);
-                
-                if (power != -999.0f) {
-                    float margin = power - params.rxSensitivityDbm;
-                    float norm = std::clamp(margin / (-30.0f - params.rxSensitivityDbm), 0.0f, 1.0f);
-                    float h = 0.1f + norm * 8.0f * params.surfaceExaggeration;
-                    
-                    rlColor4ub(255, 255, 255, 60); // Subtle white grid
-                    rlVertex3f(worldX, h, worldZ);
-                    rlVertex3f(worldX + spacing * 2, h, worldZ);
-                    rlVertex3f(worldX, h, worldZ);
-                    rlVertex3f(worldX, h, worldZ + spacing * 2);
-                }
-            }
+        rlColor4ub(255, 255, 255, 30);
+        for (int i = 0; i <= gridSize; i += 5) {
+            float p = startPos + i * spacing;
+            rlVertex3f(p, 0, startPos); rlVertex3f(p, 0, -startPos);
+            rlVertex3f(startPos, 0, p); rlVertex3f(-startPos, 0, p);
         }
         rlEnd();
+
         rlEnableBackfaceCulling();
 
         Vector2 txTile = LatLonToTile(params.txLatitude, params.txLongitude, m_zoom);
