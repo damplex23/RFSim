@@ -99,4 +99,3 @@ This software is licensed for **PERSONAL and NON-COMMERCIAL** use only. Selling 
 
 ---
 
-**Developed with ❤️ by Gemini CLI**
