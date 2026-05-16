@@ -1,0 +1,7 @@
+build/
+build_win/
+dist/imgui.ini
+*.o
+*.a
+*.exe
+bin/

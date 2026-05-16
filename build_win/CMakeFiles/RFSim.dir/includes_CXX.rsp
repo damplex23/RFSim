@@ -1,1 +1,0 @@
--I/home/damplex/projects/RFSim/include -I"/home/damplex/projects/RFSim/build_win/_deps/raylib-src/src" -I"/home/damplex/projects/RFSim/build_win/_deps/imgui-src" -I"/home/damplex/projects/RFSim/build_win/_deps/rlimgui-src" -I"/home/damplex/projects/RFSim/build_win/_deps/raylib-src/src/external/glfw/include" -I"/home/damplex/projects/RFSim/build_win/_deps/curl-src/include"

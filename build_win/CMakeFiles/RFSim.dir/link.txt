@@ -1,3 +1,0 @@
-/usr/bin/cmake -E rm -f CMakeFiles/RFSim.dir/objects.a
-/usr/bin/x86_64-w64-mingw32-ar qc CMakeFiles/RFSim.dir/objects.a @CMakeFiles/RFSim.dir/objects1.rsp
-/usr/bin/x86_64-w64-mingw32-g++ -static-libgcc -static-libstdc++ -Wl,--whole-archive CMakeFiles/RFSim.dir/objects.a -Wl,--no-whole-archive -o bin/RFSim.exe -Wl,--out-implib,libRFSim.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles/RFSim.dir/linkLibs.rsp
