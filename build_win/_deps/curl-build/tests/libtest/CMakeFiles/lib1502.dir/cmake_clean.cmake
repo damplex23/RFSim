@@ -1,0 +1,16 @@
+file(REMOVE_RECURSE
+  "../../../../bin/lib1502.exe"
+  "../../../../bin/lib1502.pdb"
+  "CMakeFiles/lib1502.dir/first.c.obj"
+  "CMakeFiles/lib1502.dir/first.c.obj.d"
+  "CMakeFiles/lib1502.dir/lib1502.c.obj"
+  "CMakeFiles/lib1502.dir/lib1502.c.obj.d"
+  "CMakeFiles/lib1502.dir/testutil.c.obj"
+  "CMakeFiles/lib1502.dir/testutil.c.obj.d"
+  "liblib1502.dll.a"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C)
+  include(CMakeFiles/lib1502.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

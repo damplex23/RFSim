@@ -1,0 +1,24 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
+# The set of languages for which implicit dependencies are needed:
+set(CMAKE_DEPENDS_LANGUAGES
+  )
+
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/damplex/projects/RFSim/build_win/_deps/curl-src/tests/libtest/first.c" "_deps/curl-build/tests/unit/CMakeFiles/unit1663.dir/__/libtest/first.c.obj" "gcc" "_deps/curl-build/tests/unit/CMakeFiles/unit1663.dir/__/libtest/first.c.obj.d"
+  "/home/damplex/projects/RFSim/build_win/_deps/curl-src/tests/unit/unit1663.c" "_deps/curl-build/tests/unit/CMakeFiles/unit1663.dir/unit1663.c.obj" "gcc" "_deps/curl-build/tests/unit/CMakeFiles/unit1663.dir/unit1663.c.obj.d"
+  )
+
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
+  )
+
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
+  )
+
+# Fortran module output directory.
+set(CMAKE_Fortran_TARGET_MODULE_DIR "")

@@ -53,7 +53,15 @@ FetchContent_Declare(
 set(BUILD_CURL_EXE OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(HTTP_ONLY ON CACHE BOOL "" FORCE) # Simplified build for RFSim
-set(CURL_USE_OPENSSL OFF CACHE BOOL "" FORCE)
+
+if(WIN32)
+    set(CURL_USE_SCHANNEL ON CACHE BOOL "" FORCE)
+    set(CURL_USE_OPENSSL OFF CACHE BOOL "" FORCE)
+else()
+    set(CURL_USE_SCHANNEL OFF CACHE BOOL "" FORCE)
+    set(CURL_USE_OPENSSL ON CACHE BOOL "" FORCE)
+endif()
+
 set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
 set(CURL_USE_LIBSSH2 OFF CACHE BOOL "" FORCE)
 set(CURL_DISABLE_LDAP ON CACHE BOOL "" FORCE)
@@ -115,10 +123,10 @@ if(UNIX)
 endif()
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE winmm gdi32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE winmm gdi32 ws2_32 crypt32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE CURL_STATICLIB NOGDI)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        target_link_options(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -static)
+        target_link_options(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++)
     endif()
 endif()
 

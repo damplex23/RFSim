@@ -1,22 +1,24 @@
 # RFSim: Handoff & Architectural Source of Truth
 **Version:** 1.2.0  
+# RFSim: Handoff & Architectural Source of Truth
+**Version:** 1.2.1 (Map Rendering Fix)
 **Stack:** C++20, Raylib 5.5, Dear ImGui (Docking), libcurl  
 **Lead Architect:** Gemini CLI
 
 ---
 
-## 1. System Architecture & Data-Flow Map
-
-### Asynchronous Data Pipeline & Optimized Cache
-The application operates on a non-blocking, decoupled architecture to ensure 60 FPS rendering regardless of network latency or physics complexity.
+## 1. Core Engine Updates
+The application operates on a non-blocking, decoupled architecture to ensure 60 FPS UI responsiveness even during heavy network I/O or propagation calculations.
 
 1.  **Optimized Tile Cache System**:
     - **Bit-Packed Keys**: Replaced string-based lookups with a `uint64_t` key `[16 bits Z | 24 bits X | 24 bits Y]` for O(1) performance.
     - **LRU Management**: Implements a Least Recently Used (LRU) pruning strategy with a **1024-tile capacity**.
     - **In-Flight Tracking**: Uses a `m_pendingRequests` vector to prevent redundant network threads.
+    - **HTTPS Support**: Fixed `libcurl` build configuration to support TLS (OpenSSL on Linux, Schannel on Windows), enabling map tile downloads from OSM.
+    - **Retry Logic**: Added automatic retry for failed tile fetches by clearing them from the cache.
 2.  **libcurl Web Request Thread**:
     - Detached `std::thread` execution of `FetchTileAsync`.
-    - Retrieves PNG bytes from OSM using `libcurl` (Built from source via FetchContent).
+    - Retrieves PNG bytes from OSM using `libcurl` with proper TLS backends.
 3.  **Raylib Texture Binding**:
     - Main thread executes `LoadTextureFromImage` and manages GPU texture lifecycle.
 4.  **Display Mode Dispatcher**:
@@ -29,9 +31,10 @@ The application operates on a non-blocking, decoupled architecture to ensure 60 
 ## 2. Build System & Dependency Management
 
 - **CMake 3.20+**: Primary build system.
-- **FetchContent Integration**: All dependencies (Raylib, ImGui, rlImGui, and **libcurl**) are fetched and built from source to ensure architecture-specific compatibility.
+- **FetchContent Integration**: All dependencies (Raylib, ImGui, rlImGui, and **libcurl**) are fetched and built from source.
 - **Cross-Compilation**: Support for building Windows binaries from Linux using `x86_64-w64-mingw32-gcc`.
-- **Static Linking**: Windows builds are statically linked (`-static-libgcc -static-libstdc++`) for high portability.
+- **Static Linking**: Windows builds use `-static-libgcc -static-libstdc++` for portability while minimizing AV (Antivirus) heuristic flags.
+- **Network Security**: Windows builds use native `Schannel` for TLS, reducing external dependency footprint.
 
 ---
 

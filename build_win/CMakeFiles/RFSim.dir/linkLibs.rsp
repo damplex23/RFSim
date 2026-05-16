@@ -1,0 +1,1 @@
+ "_deps/raylib-build/raylib/libraylib.a" libimgui_lib.a "_deps/curl-build/lib/libcurl.a" -lwinmm -lgdi32 -lws2_32 -lcrypt32 -lopengl32 -lglu32 -lwinmm -lbcrypt -ladvapi32 -lpthread -lcrypt32 -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

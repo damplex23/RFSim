@@ -156,6 +156,9 @@ void MapEngine::FetchTileAsync(int x, int y, int z) {
                 if (it != m_tileCache.end() && !it->second->loaded) {
                     it->second->filePath = std::string(chunk.memory, chunk.size);
                 }
+            } else {
+                // If fetch failed, remove from cache so it can be retried later
+                m_tileCache.erase(key);
             }
             // Remove from pending
             m_pendingRequests.erase(std::remove(m_pendingRequests.begin(), m_pendingRequests.end(), key), m_pendingRequests.end());
