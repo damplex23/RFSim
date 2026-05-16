@@ -1,0 +1,17 @@
+PROPRIETARY LICENSE - PERSONAL & NON-COMMERCIAL USE ONLY
+
+Copyright (c) 2026 damplex23. All rights reserved.
+
+1. OWNERSHIP:
+The Software and all associated intellectual property rights are and shall remain the sole and exclusive property of damplex23.
+
+2. PERMITTED USE:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use the Software for personal, educational, and non-commercial purposes only.
+
+3. PROHIBITIONS:
+- SELLING: The Software, or any portion thereof, may NOT be sold, leased, or otherwise redistributed for profit or commercial gain.
+- COMMERCIAL USE: Use of the Software for commercial, business, or professional purposes is strictly prohibited without prior written consent from damplex23.
+- MODIFICATION: Modifications may be made for personal use, but redistributed modified versions must retain this license and original copyright notice.
+
+4. NO WARRANTY:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
