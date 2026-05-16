@@ -44,8 +44,22 @@ if(NOT rlimgui_POPULATED)
     FetchContent_Populate(rlImGui)
 endif()
 
+# 4. libcurl - Network Requests
+FetchContent_Declare(
+    curl
+    GIT_REPOSITORY https://github.com/curl/curl.git
+    GIT_TAG        curl-8_11_0
+)
+set(BUILD_CURL_EXE OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(HTTP_ONLY ON CACHE BOOL "" FORCE) # Simplified build for RFSim
+set(CURL_USE_OPENSSL OFF CACHE BOOL "" FORCE)
+set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
+set(CURL_USE_LIBSSH2 OFF CACHE BOOL "" FORCE)
+set(CURL_DISABLE_LDAP ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(curl)
+
 # --- System Dependencies ---
-find_package(CURL REQUIRED)
 find_package(Threads REQUIRED)
 
 # --- Project Source Configuration ---
@@ -91,13 +105,21 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
     raylib
     imgui_lib
-    ${CURL_LIBRARIES}
+    libcurl
     Threads::Threads
 )
 
 # Platform Specific Linking
 if(UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE m dl)
+endif()
+
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE winmm gdi32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CURL_STATICLIB NOGDI)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_link_options(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -static)
+    endif()
 endif()
 
 # Development Flags

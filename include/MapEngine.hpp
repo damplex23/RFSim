@@ -69,7 +69,7 @@ private:
     
     Camera2D m_camera;
     Camera3D m_camera3D;
-    RenderTexture2D m_heatmapOverlay;
+    
     Texture2D m_globeTexture = { 0 };
     bool m_globeTextureRequested = false;
 };

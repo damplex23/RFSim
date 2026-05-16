@@ -13,7 +13,17 @@
 #include <cmath>
 #include <iostream>
 #include <thread>
+#ifdef _WIN32
+    #define CloseWindow CloseWindowWin
+    #define ShowCursor ShowCursorWin
+    #define Rectangle RectangleWin
+#endif
 #include <curl/curl.h>
+#ifdef _WIN32
+    #undef CloseWindow
+    #undef ShowCursor
+    #undef Rectangle
+#endif
 #include <cstring>
 #include <algorithm>
 #include "rlgl.h"
@@ -62,7 +72,6 @@ MapEngine::MapEngine() {
     m_viewLat = 0.0;
     m_viewLon = 0.0;
 
-    m_heatmapOverlay = { 0 };
     m_globeTexture = { 0 };
     m_globeTextureRequested = false;
 }
@@ -79,12 +88,7 @@ void MapEngine::Initialize() {
 
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
-    
-    if (m_heatmapOverlay.id != 0) {
-        UnloadRenderTexture(m_heatmapOverlay);
-    }
-    m_heatmapOverlay = LoadRenderTexture(screenWidth, screenHeight);
-    
+
     m_camera.offset = Vector2{ (float)screenWidth / 2.0f, (float)screenHeight / 2.0f };
 }
 
@@ -96,11 +100,9 @@ void MapEngine::Shutdown() {
         }
     }
     m_tileCache.clear();
-    if (m_heatmapOverlay.id != 0) UnloadRenderTexture(m_heatmapOverlay);
     if (m_globeTexture.id != 0) UnloadTexture(m_globeTexture);
     curl_global_cleanup();
 }
-
 Vector2 MapEngine::LatLonToTile(double lat, double lon, int zoom) {
     double n = std::pow(2.0, zoom);
     double x = n * ((lon + 180.0) / 360.0);
@@ -549,13 +551,13 @@ static void DrawAntennaPatternLobes(const RFParameters& params, Vector3 position
             Vector3 v4 = getPos(theta2, phi1);
 
             // Triangle 1
-            rlColor4ub(255, 100, 0, 180);
+            rlColor4ub(255, 100, 0, 100);
             rlVertex3f(v1.x, v1.y, v1.z);
             rlVertex3f(v2.x, v2.y, v2.z);
             rlVertex3f(v3.x, v3.y, v3.z);
             
             // Triangle 2
-            rlColor4ub(255, 150, 0, 180);
+            rlColor4ub(255, 150, 0, 100);
             rlVertex3f(v1.x, v1.y, v1.z);
             rlVertex3f(v3.x, v3.y, v3.z);
             rlVertex3f(v4.x, v4.y, v4.z);
@@ -677,13 +679,13 @@ void MapEngine::Draw3DSurface(const RFParameters& params) {
     }
 
     if (params.txLatitude != 0.0 || params.txLongitude != 0.0) {
-        const int gridSize = 60; 
-        const float spacing = 0.4f;
+        const int gridSize = 80; // Increased resolution
+        const float spacing = 0.35f; 
         const float startPos = -(gridSize * spacing) / 2.0f;
 
         Vector2 centerTile = LatLonToTile(m_viewLat, m_viewLon, m_zoom);
 
-        rlDisableBackfaceCulling(); // Make heatmap double-sided
+        rlDisableBackfaceCulling();
         for (int z = 0; z < gridSize - 1; ++z) {
             rlBegin(RL_TRIANGLES);
             for (int x = 0; x < gridSize - 1; ++x) {
@@ -699,32 +701,32 @@ void MapEngine::Draw3DSurface(const RFParameters& params) {
                     GeoCoord geo = PixelToLatLon(pixelPos, centerTile, m_zoom);
                     float power = PropagationEngine::CalculateReceivedPower(params, geo.lat, geo.lon);
                     
-                    float h = 0.05f; 
+                    float h = 0.1f; // Slightly higher base to avoid Z-fighting
                     cls[i] = Color{ 0, 0, 0, 0 }; 
                     if (power != -999.0f) {
                         float margin = power - params.rxSensitivityDbm;
                         float norm = margin / (-30.0f - params.rxSensitivityDbm);
                         if (norm < 0.0f) norm = 0.0f;
                         if (norm > 1.0f) norm = 1.0f;
-                        h += norm * 6.0f * params.surfaceExaggeration;
+                        h += norm * 8.0f * params.surfaceExaggeration;
                         
-                        if (margin < 10.0f)      cls[i] = Color{ 0, 121, 241, 100 };  
-                        else if (margin < 20.0f) cls[i] = Color{ 0, 255, 255, 120 };  
-                        else if (margin < 30.0f) cls[i] = Color{ 0, 228, 48, 150 };   
-                        else if (margin < 45.0f) cls[i] = Color{ 255, 203, 0, 180 };  
-                        else                     cls[i] = Color{ 230, 41, 55, 200 };  
+                        // Brighter, more opaque colors for 3D surface
+                        if (margin < 10.0f)      cls[i] = Color{ 0, 121, 241, 180 };  
+                        else if (margin < 20.0f) cls[i] = Color{ 0, 255, 255, 190 };  
+                        else if (margin < 30.0f) cls[i] = Color{ 0, 228, 48, 200 };   
+                        else if (margin < 45.0f) cls[i] = Color{ 255, 203, 0, 220 };  
+                        else                     cls[i] = Color{ 230, 41, 55, 240 };  
                     }
                     pts[i][0] = worldX; pts[i][1] = h; pts[i][2] = worldZ;
                 }
 
-                if (cls[0].a > 0 || cls[1].a > 0 || cls[2].a > 0) {
-                    // Triangle 1 (CCW)
+                if (cls[0].a > 0 || cls[1].a > 0 || cls[2].a > 0 || cls[3].a > 0) {
+                    // Triangle 1
                     rlColor4ub(cls[0].r, cls[0].g, cls[0].b, cls[0].a); rlVertex3f(pts[0][0], pts[0][1], pts[0][2]);
                     rlColor4ub(cls[2].r, cls[2].g, cls[2].b, cls[2].a); rlVertex3f(pts[2][0], pts[2][1], pts[2][2]);
                     rlColor4ub(cls[1].r, cls[1].g, cls[1].b, cls[1].a); rlVertex3f(pts[1][0], pts[1][1], pts[1][2]);
-                }
-                if (cls[0].a > 0 || cls[2].a > 0 || cls[3].a > 0) {
-                    // Triangle 2 (CCW)
+
+                    // Triangle 2
                     rlColor4ub(cls[0].r, cls[0].g, cls[0].b, cls[0].a); rlVertex3f(pts[0][0], pts[0][1], pts[0][2]);
                     rlColor4ub(cls[3].r, cls[3].g, cls[3].b, cls[3].a); rlVertex3f(pts[3][0], pts[3][1], pts[3][2]);
                     rlColor4ub(cls[2].r, cls[2].g, cls[2].b, cls[2].a); rlVertex3f(pts[2][0], pts[2][1], pts[2][2]);
@@ -732,6 +734,31 @@ void MapEngine::Draw3DSurface(const RFParameters& params) {
             }
             rlEnd();
         }
+
+        // Draw wireframe overlay for depth perception
+        rlBegin(RL_LINES);
+        for (int z = 0; z < gridSize - 1; z += 2) {
+            for (int x = 0; x < gridSize - 1; x += 2) {
+                float worldX = startPos + x * spacing;
+                float worldZ = startPos + z * spacing;
+                Vector2 pixelPos = { worldX * 50.0f, worldZ * 50.0f };
+                GeoCoord geo = PixelToLatLon(pixelPos, centerTile, m_zoom);
+                float power = PropagationEngine::CalculateReceivedPower(params, geo.lat, geo.lon);
+                
+                if (power != -999.0f) {
+                    float margin = power - params.rxSensitivityDbm;
+                    float norm = std::clamp(margin / (-30.0f - params.rxSensitivityDbm), 0.0f, 1.0f);
+                    float h = 0.1f + norm * 8.0f * params.surfaceExaggeration;
+                    
+                    rlColor4ub(255, 255, 255, 60); // Subtle white grid
+                    rlVertex3f(worldX, h, worldZ);
+                    rlVertex3f(worldX + spacing * 2, h, worldZ);
+                    rlVertex3f(worldX, h, worldZ);
+                    rlVertex3f(worldX, h, worldZ + spacing * 2);
+                }
+            }
+        }
+        rlEnd();
         rlEnableBackfaceCulling();
 
         Vector2 txTile = LatLonToTile(params.txLatitude, params.txLongitude, m_zoom);
