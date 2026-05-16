@@ -689,6 +689,7 @@ void MapEngine::Draw3DSurface(const RFParameters& params) {
         Vector2 centerTile = LatLonToTile(m_viewLat, m_viewLon, m_zoom);
 
         rlDisableBackfaceCulling();
+        rlSetBlendMode(BLEND_ALPHA);
         for (int z = 0; z < gridSize - 1; ++z) {
             rlBegin(RL_TRIANGLES);
             for (int x = 0; x < gridSize - 1; ++x) {
@@ -724,19 +725,20 @@ void MapEngine::Draw3DSurface(const RFParameters& params) {
                 }
 
                 if (cls[0].a > 0 || cls[1].a > 0 || cls[2].a > 0 || cls[3].a > 0) {
-                    // Triangle 1
+                    // Triangle 1 (CCW)
                     rlColor4ub(cls[0].r, cls[0].g, cls[0].b, cls[0].a); rlVertex3f(pts[0][0], pts[0][1], pts[0][2]);
-                    rlColor4ub(cls[2].r, cls[2].g, cls[2].b, cls[2].a); rlVertex3f(pts[2][0], pts[2][1], pts[2][2]);
                     rlColor4ub(cls[1].r, cls[1].g, cls[1].b, cls[1].a); rlVertex3f(pts[1][0], pts[1][1], pts[1][2]);
-
-                    // Triangle 2
-                    rlColor4ub(cls[0].r, cls[0].g, cls[0].b, cls[0].a); rlVertex3f(pts[0][0], pts[0][1], pts[0][2]);
-                    rlColor4ub(cls[3].r, cls[3].g, cls[3].b, cls[3].a); rlVertex3f(pts[3][0], pts[3][1], pts[3][2]);
                     rlColor4ub(cls[2].r, cls[2].g, cls[2].b, cls[2].a); rlVertex3f(pts[2][0], pts[2][1], pts[2][2]);
+
+                    // Triangle 2 (CCW)
+                    rlColor4ub(cls[0].r, cls[0].g, cls[0].b, cls[0].a); rlVertex3f(pts[0][0], pts[0][1], pts[0][2]);
+                    rlColor4ub(cls[2].r, cls[2].g, cls[2].b, cls[2].a); rlVertex3f(pts[2][0], pts[2][1], pts[2][2]);
+                    rlColor4ub(cls[3].r, cls[3].g, cls[3].b, cls[3].a); rlVertex3f(pts[3][0], pts[3][1], pts[3][2]);
                 }
             }
             rlEnd();
         }
+        rlSetBlendMode(BLEND_ALPHA); // Reset to default just in case
 
         // Draw wireframe overlay for depth perception
         rlBegin(RL_LINES);
