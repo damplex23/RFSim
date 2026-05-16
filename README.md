@@ -9,6 +9,38 @@
 
 ---
 
+## 🚀 Quick Start (Binaries)
+
+Version **1.2.1** includes critical fixes for map rendering and optimized Windows compatibility.
+
+### Pre-compiled Binaries
+You can find ready-to-run binaries in the following directories:
+*   **`dist/`**: Current distribution folder.
+*   **`release/`**: Stable release folder.
+
+### 🐧 Linux Execution
+1.  Ensure you have the required dependencies (see below).
+2.  Run from the project root:
+    ```bash
+    chmod +x dist/RFSim
+    ./dist/RFSim
+    ```
+
+### 🪟 Windows Execution
+RFSim for Windows is distributed as a **portable, statically-linked executable**. No installer is required.
+1.  Navigate to `dist/` or `release/`.
+2.  Double-click **`RFSim.exe`**.
+3.  **Note on Antivirus:** Version 1.2.1 has been optimized to reduce false-positive detections by using standard linking. If you receive a "SmartScreen" warning, click *More Info* -> *Run Anyway*.
+
+---
+
+## 🛠 Features Update (v1.2.1)
+*   **Map Rendering Fix:** Resolved a `libcurl` configuration issue that prevented map tiles from loading over HTTPS.
+*   **Auto-Retry Logic:** The map engine now automatically retries failed tile downloads.
+*   **Schannel Integration:** Windows builds now use native Windows security for network requests, improving reliability.
+
+---
+
 ## 🚀 Core Features
 
 ### 🌍 Triple-View Visualization Engine

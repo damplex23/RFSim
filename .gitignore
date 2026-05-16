@@ -3,5 +3,10 @@ build_win/
 dist/imgui.ini
 *.o
 *.a
-*.exe
 bin/
+
+# Allow binaries in distribution/release folders
+!dist/RFSim
+!dist/RFSim.exe
+!release/RFSim
+!release/RFSim.exe
